@@ -10,7 +10,7 @@
         android:theme="@style/AppTheme" >
         
         <!-- Declares the input method service -->
-        <service android:name="AdbIME"
+        <service android:name=".EdgeIME"
             android:label="@string/keyboard_name"
             android:permission="android.permission.BIND_INPUT_METHOD">
             <intent-filter>

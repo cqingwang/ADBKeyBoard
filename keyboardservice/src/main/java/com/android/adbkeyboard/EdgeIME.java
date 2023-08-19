@@ -6,21 +6,20 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.inputmethodservice.InputMethodService;
 import android.util.Base64;
-import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 
-public class AdbIME extends InputMethodService {
-	private String IME_MESSAGE = "ADB_INPUT_TEXT";
-	private String IME_CHARS = "ADB_INPUT_CHARS";
-	private String IME_KEYCODE = "ADB_INPUT_CODE";
-	private String IME_META_KEYCODE = "ADB_INPUT_MCODE";
-	private String IME_EDITORCODE = "ADB_EDITOR_CODE";
-	private String IME_MESSAGE_B64 = "ADB_INPUT_B64";
-	private String IME_CLEAR_TEXT = "ADB_CLEAR_TEXT";
+public class EdgeIME extends InputMethodService {
+	private String IME_MESSAGE = "EDGE_INPUT_TEXT";
+	private String IME_CHARS = "EDGE_INPUT_CHARS";
+	private String IME_KEYCODE = "EDGE_INPUT_CODE";
+	private String IME_META_KEYCODE = "EDGE_INPUT_MCODE";
+	private String IME_EDITORCODE = "EDGE_EDITOR_CODE";
+	private String IME_MESSAGE_B64 = "EDGE_INPUT_B64";
+	private String IME_CLEAR_TEXT = "EDGE_CLEAR_TEXT";
 	private BroadcastReceiver mReceiver = null;
 
 	@Override
