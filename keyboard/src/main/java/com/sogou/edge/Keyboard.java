@@ -1,4 +1,4 @@
-package com.android.adbkeyboard;
+package com.sogou.edge;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -12,7 +12,7 @@ import android.view.View;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 
-public class EdgeIME extends InputMethodService {
+public class Keyboard extends InputMethodService {
 	private String IME_MESSAGE = "EDGE_INPUT_TEXT";
 	private String IME_CHARS = "EDGE_INPUT_CHARS";
 	private String IME_KEYCODE = "EDGE_INPUT_CODE";
@@ -34,7 +34,7 @@ public class EdgeIME extends InputMethodService {
 			filter.addAction(IME_EDITORCODE);
 			filter.addAction(IME_MESSAGE_B64);
 			filter.addAction(IME_CLEAR_TEXT);
-			mReceiver = new AdbReceiver();
+			mReceiver = new KeyboardReceiver();
 			registerReceiver(mReceiver, filter);
 		}
 
@@ -47,7 +47,7 @@ public class EdgeIME extends InputMethodService {
 		super.onDestroy();
 	}
 
-	class AdbReceiver extends BroadcastReceiver {
+	class KeyboardReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals(IME_MESSAGE)) {

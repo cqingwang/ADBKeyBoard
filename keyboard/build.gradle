@@ -5,7 +5,7 @@ android {
     buildToolsVersion '28.0.3'
 
     defaultConfig {
-        applicationId 'com.sogou.inputedge'
+        applicationId 'com.sogou.edge'
         minSdkVersion 15
         targetSdkVersion 29
         versionCode 200
