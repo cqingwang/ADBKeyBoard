@@ -1,16 +1,21 @@
 package com.sogou.edge;
 
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.inputmethodservice.InputMethodService;
+import android.os.Bundle;
 import android.util.Base64;
+import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
+import android.view.inputmethod.InputMethodManager;
 
 public class Keyboard extends InputMethodService {
     private String IME_MESSAGE = "EDGE_INPUT_TEXT";
@@ -21,10 +26,11 @@ public class Keyboard extends InputMethodService {
     private String IME_MESSAGE_B64 = "EDGE_INPUT_B64";
     private String IME_CLEAR_TEXT = "EDGE_CLEAR_TEXT";
     private BroadcastReceiver mReceiver = null;
+    private View inputView;
 
     @Override
     public View onCreateInputView() {
-        View mInputView = getLayoutInflater().inflate(R.layout.view, null);
+        inputView = getLayoutInflater().inflate(R.layout.view, null);
 
         if (mReceiver == null) {
             IntentFilter filter = new IntentFilter(IME_MESSAGE);
@@ -37,8 +43,7 @@ public class Keyboard extends InputMethodService {
             mReceiver = new KeyboardReceiver();
             registerReceiver(mReceiver, filter);
         }
-
-        return mInputView;
+        return inputView;
     }
 
     public void onDestroy() {
@@ -51,7 +56,10 @@ public class Keyboard extends InputMethodService {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(IME_MESSAGE)) {
+                show();
                 String msg = intent.getStringExtra("msg");
+                Log.e(IME_MESSAGE, msg + "");
+
                 if (msg != null) {
                     InputConnection ic = getCurrentInputConnection();
                     if (ic != null)
@@ -60,6 +68,7 @@ public class Keyboard extends InputMethodService {
             }
 
             if (intent.getAction().equals(IME_MESSAGE_B64)) {
+                show();
                 String data = intent.getStringExtra("msg");
 
                 byte[] b64 = Base64.decode(data, Base64.DEFAULT);
@@ -78,6 +87,7 @@ public class Keyboard extends InputMethodService {
             }
 
             if (intent.getAction().equals(IME_CHARS)) {
+                show();
                 int[] chars = intent.getIntArrayExtra("chars");
                 if (chars != null) {
                     String msg = new String(chars, 0, chars.length);
@@ -89,14 +99,16 @@ public class Keyboard extends InputMethodService {
 
             if (intent.getAction().equals(IME_KEYCODE)) {
                 int code = intent.getIntExtra("code", -1);
+                Log.e(IME_KEYCODE, code + "");
                 if (code != -1) {
                     InputConnection ic = getCurrentInputConnection();
-                    if (ic != null)
-                        ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, code));
+                    if (ic != null) ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, code));
+                    if (code == 66) dismiss();
                 }
             }
 
             if (intent.getAction().equals(IME_MESSAGE)) {
+                show();
                 String msg = intent.getStringExtra("mcode"); // Get message.
                 if (msg != null) {
                     String[] mcodes = msg.split(","); // Get mcodes in string.
@@ -149,6 +161,8 @@ public class Keyboard extends InputMethodService {
             }
 
             if (intent.getAction().equals(IME_CLEAR_TEXT)) {
+                show();
+                Log.e(IME_CLEAR_TEXT, "true");
                 InputConnection ic = getCurrentInputConnection();
                 if (ic != null) {
                     //REF: stackoverflow/33082004 author: Maxime Epain
@@ -159,5 +173,28 @@ public class Keyboard extends InputMethodService {
                 }
             }
         }
+    }
+
+    public void show() {
+//        showWindow(true);
+        Log.e("EDGE","show");
+//        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+//        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+
+//        imm.toggleSoftInput(0, InputMethodManager.HIDE_IMPLICIT_ONLY); // show
+    }
+
+    public void dismiss() {
+        Log.e("EDGE","dismiss");
+
+//        hideWindow();
+//        requestHideSelf(0);
+//
+//        inputView.clearFocus();
+
+//        InputMethodManager imm = (InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE);
+//        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+
+
     }
 }
