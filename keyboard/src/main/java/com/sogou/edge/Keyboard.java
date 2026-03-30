@@ -9,6 +9,7 @@ import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.util.Pair;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.View;
@@ -16,6 +17,14 @@ import android.view.WindowManager;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
+import org.apache.commons.io.http.HttpServer;
+import org.apache.commons.io.http.bean.Headers;
+import org.apache.commons.io.http.bean.HttpAnswer;
+import org.apache.commons.io.offical.http_sun.HttpExchange;
+import org.apache.commons.io.utils.Callback;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Keyboard extends InputMethodService {
     private String IME_MESSAGE = "EDGE_INPUT_TEXT";
@@ -26,6 +35,7 @@ public class Keyboard extends InputMethodService {
     private String IME_MESSAGE_B64 = "EDGE_INPUT_B64";
     private String IME_CLEAR_TEXT = "EDGE_CLEAR_TEXT";
     private BroadcastReceiver mReceiver = null;
+    private boolean httpServiced = false;
     private View inputView;
 
     @Override
@@ -43,13 +53,39 @@ public class Keyboard extends InputMethodService {
             mReceiver = new KeyboardReceiver();
             registerReceiver(mReceiver, filter);
         }
+        if (!httpServiced) listen(8000);
         return inputView;
+    }
+
+    private void listen(int port) {
+        Map<String, Callback<HttpExchange>> handlers = new ConcurrentHashMap<>();
+        HttpServer.register(handlers, "api/input/text", ex -> {
+            Map<String, Object> params = HttpServer.dicted(ex, new String[]{"text"});
+            HttpServer.anything(ex, params, (HttpServer.Call<HttpAnswer>) headers -> {
+                String text = params.get("text") + "";
+                return new HttpAnswer(200, new Headers(), "ok");
+            });
+            return true;
+        });
+
+        HttpServer.serve(handlers, port, 2);
+        httpServiced = true;
     }
 
     public void onDestroy() {
         if (mReceiver != null)
             unregisterReceiver(mReceiver);
         super.onDestroy();
+    }
+
+    private boolean inputText(String text) {
+        if (text == null) return false;
+        InputConnection ic = getCurrentInputConnection();
+        if (ic != null) {
+            ic.commitText(text, 1);
+            return true;
+        }
+        return false;
     }
 
     class KeyboardReceiver extends BroadcastReceiver {
@@ -59,12 +95,7 @@ public class Keyboard extends InputMethodService {
                 show();
                 String msg = intent.getStringExtra("msg");
                 Log.e(IME_MESSAGE, msg + "");
-
-                if (msg != null) {
-                    InputConnection ic = getCurrentInputConnection();
-                    if (ic != null)
-                        ic.commitText(msg, 1);
-                }
+                inputText(msg);
             }
 
             if (intent.getAction().equals(IME_MESSAGE_B64)) {
@@ -78,12 +109,7 @@ public class Keyboard extends InputMethodService {
                 } catch (Exception e) {
 
                 }
-
-                if (msg != null) {
-                    InputConnection ic = getCurrentInputConnection();
-                    if (ic != null)
-                        ic.commitText(msg, 1);
-                }
+                inputText(msg);
             }
 
             if (intent.getAction().equals(IME_CHARS)) {
@@ -91,9 +117,7 @@ public class Keyboard extends InputMethodService {
                 int[] chars = intent.getIntArrayExtra("chars");
                 if (chars != null) {
                     String msg = new String(chars, 0, chars.length);
-                    InputConnection ic = getCurrentInputConnection();
-                    if (ic != null)
-                        ic.commitText(msg, 1);
+                    inputText(msg);
                 }
             }
 
@@ -177,7 +201,7 @@ public class Keyboard extends InputMethodService {
 
     public void show() {
 //        showWindow(true);
-        Log.e("EDGE","show");
+        Log.e("EDGE", "show");
 //        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 //        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
 
@@ -185,7 +209,7 @@ public class Keyboard extends InputMethodService {
     }
 
     public void dismiss() {
-        Log.e("EDGE","dismiss");
+        Log.e("EDGE", "dismiss");
 
 //        hideWindow();
 //        requestHideSelf(0);
