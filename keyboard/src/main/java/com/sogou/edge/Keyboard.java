@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
 import android.util.Pair;
@@ -53,23 +55,27 @@ public class Keyboard extends InputMethodService {
             mReceiver = new KeyboardReceiver();
             registerReceiver(mReceiver, filter);
         }
-        if (!httpServiced) listen(8000);
+        listen(8000);
         return inputView;
     }
 
     private void listen(int port) {
-        Map<String, Callback<HttpExchange>> handlers = new ConcurrentHashMap<>();
-        HttpServer.register(handlers, "api/input/text", ex -> {
-            Map<String, Object> params = HttpServer.dicted(ex, new String[]{"text"});
-            HttpServer.anything(ex, params, (HttpServer.Call<HttpAnswer>) headers -> {
-                String text = params.get("text") + "";
-                return new HttpAnswer(200, new Headers(), "ok");
-            });
-            return true;
-        });
-
-        HttpServer.serve(handlers, port, 2);
+        if (httpServiced) return;
         httpServiced = true;
+        new Thread(() -> {
+            if (httpServiced) return;
+            Map<String, Callback<HttpExchange>> handlers = new ConcurrentHashMap<>();
+            HttpServer.register(handlers, "api/input/text", ex -> {
+                Map<String, Object> params = HttpServer.dicted(ex, new String[]{"text"});
+                HttpServer.anything(ex, params, (HttpServer.Call<HttpAnswer>) headers -> {
+                    String text = params.get("text") + "";
+                    inputText(text, true);
+                    return new HttpAnswer(200, new Headers(), "ok");
+                });
+                return true;
+            });
+            HttpServer.serve(handlers, port, 2);
+        }).start();
     }
 
     public void onDestroy() {
@@ -79,10 +85,20 @@ public class Keyboard extends InputMethodService {
     }
 
     private boolean inputText(String text) {
+        return inputText(text, false);
+    }
+
+    private boolean inputText(String text, boolean mainThread) {
         if (text == null) return false;
         InputConnection ic = getCurrentInputConnection();
         if (ic != null) {
-            ic.commitText(text, 1);
+            if (mainThread) {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    ic.commitText(text, 1);
+                });
+            } else {
+                ic.commitText(text, 1);
+            }
             return true;
         }
         return false;
