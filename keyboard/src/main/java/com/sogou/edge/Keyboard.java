@@ -61,11 +61,12 @@ public class Keyboard extends InputMethodService {
 
     private void listen(int port) {
         if (httpServiced) return;
-        httpServiced = true;
+        Log.i("HttpServer",port+":start");
         new Thread(() -> {
             if (httpServiced) return;
+            httpServiced = true;
             Map<String, Callback<HttpExchange>> handlers = new ConcurrentHashMap<>();
-            HttpServer.register(handlers, "api/input/text", ex -> {
+            HttpServer.register(handlers, "/api/input/text", ex -> {
                 Map<String, Object> params = HttpServer.dicted(ex, new String[]{"text"});
                 HttpServer.anything(ex, params, (HttpServer.Call<HttpAnswer>) headers -> {
                     String text = params.get("text") + "";
@@ -74,7 +75,8 @@ public class Keyboard extends InputMethodService {
                 });
                 return true;
             });
-            HttpServer.serve(handlers, port, 2);
+            HttpServer.serve(handlers, port, 2,true);
+            Log.i("HttpServer",port+":done");
         }).start();
     }
 
